@@ -1,0 +1,6 @@
+package utils
+
+const Authorization = "MjAxODAxMTFfaW9zOmFkMDBhNDdjMTYxMGUwZTJmZDkwOGMwYTBiZWE4MmQ0MDc0YzIzMzU="
+const Authorization2 = "MjAxODAxMTFfaW9zOmFkNWNjZjY1MzUzZDNmYWQzMjEyNjE3MmMwMGZmN2VhYzJlNTUyZGI="
+const Authorization3 = "MjAxODAxMTFfaW9zOjRlNzdlYzk2YmQwZDljYzg2ZjEyN2IzMGY0NGJkM2RhNzUyMjIxNjg="
+const Port = 6600
