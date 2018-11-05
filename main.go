@@ -26,7 +26,7 @@ func FetchDailyStats(c *gin.Context) {
 }
 
 func FetchDailyNew(c *gin.Context) {
-	houseList := controllers.FetchDailyNew("")
+	houseList := controllers.FetchDailyNew(0)
 	succ := &utils.RespSucc{
 		Error:   nil,
 		Success: true,
