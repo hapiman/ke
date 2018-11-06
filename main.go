@@ -5,6 +5,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/hapiman/ke/controllers"
+	"github.com/hapiman/ke/models"
 	"github.com/hapiman/ke/utils"
 )
 
@@ -51,6 +52,11 @@ func FetchDailyTxList(c *gin.Context) {
 
 func main() {
 	r := gin.Default()
+
+	// 处理数据库连接
+	keConn := models.ConnKe()
+	defer keConn.Close()
+
 	r.GET("/ke/api/v1/daily/stats", FetchDailyStats)
 	r.GET("/ke/api/v1/daily/new", FetchDailyNew)
 	r.GET("/ke/api/v1/daily/txlist", FetchDailyTxList)

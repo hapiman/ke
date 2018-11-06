@@ -2,8 +2,8 @@ package controllers
 
 import (
 	"fmt"
-	"time"
 
+	"github.com/hapiman/ke/models"
 	"github.com/hapiman/ke/utils"
 	"github.com/mikemintang/go-curl"
 	"github.com/tidwall/gjson"
@@ -39,12 +39,12 @@ func FetchDailyNew(searchSeds int64) []map[string]string {
 		searchSeds = utils.GetCurrentSeds()
 	}
 	var houseList []map[string]string
-	offSet := 0
-	for {
-		url := fmt.Sprintf("https://app.api.ke.com/house/ershoufang/searchv4?cityId=510100&condition=tt2&hasRecommend=0&limitCount=20&limitOffset=%d&order=co32&request_ts=1541411669", offSet)
-		fmt.Println("url => %s", url)
+	count := 0
+	for len(utils.Authorization2) > count {
+		url := utils.HouseNewUrls[count]
+		fmt.Printf("url => %s \n", url)
 		headers := map[string]string{
-			"Authorization":        utils.Authorization2,
+			"Authorization":        utils.Authorization2[count],
 			"Lianjia-Access-Token": "2.0012633e536b1a0ff303ce17625175c2b4",
 			"Lianjia-Device-Id":    "89B621AE-A099-46C9-A172-4BC69F74445F",
 			"Lianjia-Im-Version":   "1",
@@ -90,9 +90,7 @@ func FetchDailyNew(searchSeds int64) []map[string]string {
 				}
 				fmt.Sprintf("searchSeds => %d, realSeds => %d", searchSeds, realSeds)
 				if searchSeds > realSeds {
-					time.Sleep(time.Second * 5)
-					offSet += 20
-					fmt.Printf("offSet => %d \n", offSet)
+					count++
 					continue
 				}
 				break
@@ -102,6 +100,25 @@ func FetchDailyNew(searchSeds int64) []map[string]string {
 			break
 		}
 	}
+
+	if len(houseList) > 0 {
+		// 数据入库
+		// houseChans := make(chan map[string]string, 1)
+		for _, item := range houseList {
+			target := models.ConnKe().Where("code = ?", item["houseCode"]).First(&models.HouseEntity{})
+			currentTimeStr := utils.TimestampToTime(utils.GetCurrentSeds(), "2006-01-02 15:04:05")
+			if target.Error != nil && target.Error.Error() == "record not found" {
+				house := &models.HouseEntity{
+					Code:    item["houseCode"],
+					Title:   item["houseTitle"],
+					Online:  item["houseOnLineStr"],
+					Created: currentTimeStr,
+				}
+				models.ConnKe().Create(house)
+			}
+		}
+	}
+
 	return houseList
 }
 
