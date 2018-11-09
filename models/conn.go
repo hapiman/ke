@@ -14,7 +14,7 @@ func ConnKe() *gorm.DB {
 	if KePush != nil {
 		return KePush
 	}
-	sSqlConnStr := fmt.Sprintf("%s:%s@tcp(%s:%s)/%s?charset=utf8", "root", "123456", "localhost", "3306", "ke")
+	sSqlConnStr := fmt.Sprintf("%s:%s@tcp(%s:%s)/%s?charset=utf8", "root", "123456", "10.254.111.166", "3306", "ke")
 	db, err := gorm.Open("mysql", sSqlConnStr)
 	if err != nil {
 		panic(err)

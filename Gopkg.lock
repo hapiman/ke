@@ -73,6 +73,18 @@
   version = "1.0.1"
 
 [[projects]]
+  branch = "master"
+  name = "github.com/robfig/config"
+  packages = ["."]
+  revision = "0f78529c8c7e3e9a25f15876532ecbc07c7d99e6"
+
+[[projects]]
+  name = "github.com/robfig/cron"
+  packages = ["."]
+  revision = "b41be1df696709bb6395fe435af20370037c0b4c"
+  version = "v1.1"
+
+[[projects]]
   name = "github.com/tidwall/gjson"
   packages = ["."]
   revision = "1e3f6aeaa5bad08d777ea7807b279a07885dd8b2"
@@ -117,6 +129,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "363ccd1bda59088f3fee8f54ecc51c94a169d85e0150669c52f5fbfb4f170cfc"
+  inputs-digest = "c823b13aa70313f27049610af4eabb265172a6d7878304c4704536020d42c9da"
   solver-name = "gps-cdcl"
   solver-version = 1

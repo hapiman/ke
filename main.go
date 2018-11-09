@@ -57,6 +57,9 @@ func main() {
 	keConn := models.ConnKe()
 	defer keConn.Close()
 
+	// 定时任务
+	controllers.AutoSync()
+
 	r.GET("/ke/api/v1/daily/stats", FetchDailyStats)
 	r.GET("/ke/api/v1/daily/new", FetchDailyNew)
 	r.GET("/ke/api/v1/daily/txlist", FetchDailyTxList)

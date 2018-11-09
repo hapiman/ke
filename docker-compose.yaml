@@ -1,0 +1,9 @@
+version: '2'
+services:
+  push:
+    image: ke:latest
+    environment:
+      ENV: beta
+    ports:
+      - "6600:6600"
+    restart: always
