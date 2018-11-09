@@ -23,8 +23,10 @@ import (
 
 // AutoSync 每日08:00到22:00点，每两个小时执行一次
 func AutoSync() {
+	// FetchDailyNew(0)
 	go func() {
-		fmt.Println("AutoSync Started.")
+		currentStr := utils.TimestampToTime(utils.GetCurrentSeds(), utils.TimeYyyymmddhhmmss)
+		fmt.Printf("AutoSync Started At %s.", currentStr)
 		c := cron.New()
 		spec := "10 0 8-22 * * *"
 		// spec := "10 31 16 * * *"
@@ -35,7 +37,8 @@ func AutoSync() {
 		to, _ := cfg.String("email", "to")
 		fmt.Printf("from:%s, to:%s", from, to)
 		c.AddFunc(spec, func() {
-			fmt.Printf("AutoSync started %d times \n", count)
+			currentStr := utils.TimestampToTime(utils.GetCurrentSeds(), utils.TimeYyyymmddhhmmss)
+			fmt.Printf("AutoSync started %d times \n at %s", count, currentStr)
 			count++
 			list := FetchDailyNew(0)
 			e := &utils.EmailEntity{

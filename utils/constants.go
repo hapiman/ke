@@ -19,3 +19,4 @@ var HouseNewUrls = []string{
 
 const Authorization3 = "MjAxODAxMTFfaW9zOjRlNzdlYzk2YmQwZDljYzg2ZjEyN2IzMGY0NGJkM2RhNzUyMjIxNjg="
 const Port = 6600
+const TimeYyyymmddhhmmss = "2006-01-02 15:04:05"
