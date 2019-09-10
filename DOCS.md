@@ -1,4 +1,4 @@
-### 每日成交数据
+### 每日统计数据
 `curl -H 'Authorization: MjAxODAxMTFfaW9zOmFkMDBhNDdjMTYxMGUwZTJmZDkwOGMwYTBiZWE4MmQ0MDc0YzIzMzU=' 'https://app.api.ke.com/config/home/content?city_id=510100&request_ts=1539823818&type=iPhone'
 `
 分析`market`层级下数据

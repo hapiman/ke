@@ -2,7 +2,14 @@ package controllers
 
 import (
 	"fmt"
+	"log"
+	"net/http"
+	"regexp"
+	"strings"
+	"time"
 
+	"github.com/PuerkitoBio/goquery"
+	"github.com/hapiman/ke/models"
 	"github.com/hapiman/ke/utils"
 	"github.com/robfig/config"
 	"github.com/robfig/cron"
@@ -28,7 +35,7 @@ func AutoSync() {
 		currentStr := utils.TimestampToTime(utils.GetCurrentSeds(), utils.TimeYyyymmddhhmmss)
 		fmt.Printf("AutoSync Started At %s.", currentStr)
 		c := cron.New()
-		spec := "10 0 8-22 * * *"
+		spec := "10 0 8-14 * * *"
 		// spec := "10 31 16 * * *"
 		count := 0
 		cfgPath := utils.CacuCurrentConfigFile()
@@ -56,4 +63,74 @@ func AutoSync() {
 		})
 		c.Start()
 	}()
+}
+
+/*
+同步小区概览数据
+*/
+func SyncXiaoQuOverview() {
+	pageNo := 0
+	for {
+		quUrl := fmt.Sprintf("https://bj.ke.com/xiaoqu/chaoyang/pg%d/", pageNo)
+		res, err := http.Get(quUrl)
+		if err != nil {
+			log.Fatal(err)
+		}
+		defer res.Body.Close()
+		if res.StatusCode != 200 {
+			log.Fatalf("status code error: %d %s", res.StatusCode, res.Status)
+		}
+
+		doc, err := goquery.NewDocumentFromReader(res.Body)
+		if err != nil {
+			fmt.Println("err message: ", err.Error())
+			break
+		}
+
+		le := doc.Find(".leftContent ul.listContent li").Length()
+		if le == 0 {
+			break
+		}
+		dura, _ := time.ParseDuration("-24h")
+		curYYYYMMDD := time.Now().Add(dura).Format("2006-01-02")
+		doc.Find(".leftContent ul.listContent li").Each(func(i int, s *goquery.Selection) {
+			quId, _ := (s.Attr("data-id"))
+			quName := strings.TrimSpace(s.Find(".info .title").Text())
+			soldNumInThirty := 0
+			s.Find(".info .houseInfo a").Each(func(ii int, ss *goquery.Selection) {
+				elem := strings.TrimSpace(ss.Text())
+				if strings.Contains(elem, "成交") {
+					regx := regexp.MustCompile(`30天成交(\d{1,})套`)
+					params := regx.FindStringSubmatch(elem)
+					if len(params) >= 2 {
+						soldNumInThirty = utils.ConvertStr2Num(params[1])
+					}
+				}
+			})
+			avgPrice := utils.ConvertStr2Num(strings.TrimSpace(s.Find(".xiaoquListItemRight .xiaoquListItemPrice .totalPrice span").Text()))
+			onsaleNum := utils.ConvertStr2Num(strings.TrimSpace(s.Find(".xiaoquListItemRight .xiaoquListItemSellCount .totalSellCount span").Text()))
+			count := 0
+			models.ConnKe().Where("date=? AND qu_code=?", curYYYYMMDD, quId).Find(&models.TabXiaoQuOverview{}).Count(&count)
+			if count < 1 {
+				house := &models.TabXiaoQuOverview{
+					CityCode:         "bj",
+					DistrictCode:     "chaoyang",
+					AreaCode:         "wangjing",
+					QuCode:           quId,
+					Date:             curYYYYMMDD,
+					Name:             quName,
+					OnsaleNumCurrent: onsaleNum,
+					AvgPrice:         avgPrice,
+					SoldNumInNinety:  0,
+					VisitNumInThirty: soldNumInThirty,
+				}
+				models.ConnKe().Create(house)
+			}
+		})
+		pageNo++
+		if pageNo >= 200 {
+			// 防止程序错误，引发系统空转
+			break
+		}
+	}
 }

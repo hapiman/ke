@@ -17,6 +17,7 @@ func TimeToTimestamp(layout string, timestr string) (int64, error) {
 	if err != nil {
 		return -1, err
 	}
+	// Time => int64
 	trantimestamp := times.Unix()
 	return trantimestamp, err
 }

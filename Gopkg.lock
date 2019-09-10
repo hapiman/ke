@@ -2,6 +2,24 @@
 
 
 [[projects]]
+  name = "github.com/PuerkitoBio/goquery"
+  packages = ["."]
+  revision = "2d2796f41742ece03e8086188fa4db16a3a0b458"
+  version = "v1.5.0"
+
+[[projects]]
+  name = "github.com/andybalholm/cascadia"
+  packages = ["."]
+  revision = "901648c87902174f774fac311d7f176f8647bdaa"
+  version = "v1.0.0"
+
+[[projects]]
+  branch = "master"
+  name = "github.com/bet365/jingo"
+  packages = ["."]
+  revision = "244aa8ea2c43d43ace1cdde13c5db3963a78df6b"
+
+[[projects]]
   branch = "master"
   name = "github.com/gin-contrib/sse"
   packages = ["."]
@@ -104,6 +122,15 @@
 
 [[projects]]
   branch = "master"
+  name = "golang.org/x/net"
+  packages = [
+    "html",
+    "html/atom"
+  ]
+  revision = "4829fb13d2c62012c17688fa7f629f371014946d"
+
+[[projects]]
+  branch = "master"
   name = "golang.org/x/sys"
   packages = ["unix"]
   revision = "7e31e0c00fa05cb5fbf4347b585621d6709e19a4"
@@ -129,6 +156,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "c823b13aa70313f27049610af4eabb265172a6d7878304c4704536020d42c9da"
+  inputs-digest = "4fb2178f82d51969aed5a7f2f1347c9241b6b07df37d177ce4faf882174cdd66"
   solver-name = "gps-cdcl"
   solver-version = 1
