@@ -65,12 +65,24 @@ func AutoSync() {
 	}()
 }
 
+func SyncXiaoQuTask() {
+	c := cron.New()
+	spec := "10 10 10,16,18 * * *"
+	c.AddFunc(spec, func() {
+		fmt.Println("sync xiaoqu task start again")
+		syncXiaoQuOverview()
+		fmt.Println("sync xiaoqu task end")
+	})
+	c.Start()
+}
+
 /*
 同步小区概览数据
 */
-func SyncXiaoQuOverview() {
+func syncXiaoQuOverview() {
 	pageNo := 0
-	for {
+	loop := true
+	for pageNo < 200 && loop {
 		quUrl := fmt.Sprintf("https://bj.ke.com/xiaoqu/chaoyang/pg%d/", pageNo)
 		res, err := http.Get(quUrl)
 		if err != nil {
@@ -84,12 +96,11 @@ func SyncXiaoQuOverview() {
 		doc, err := goquery.NewDocumentFromReader(res.Body)
 		if err != nil {
 			fmt.Println("err message: ", err.Error())
-			break
 		}
 
 		le := doc.Find(".leftContent ul.listContent li").Length()
 		if le == 0 {
-			break
+			loop = false
 		}
 		dura, _ := time.ParseDuration("-24h")
 		curYYYYMMDD := time.Now().Add(dura).Format("2006-01-02")
@@ -99,7 +110,7 @@ func SyncXiaoQuOverview() {
 			soldNumInThirty := 0
 			s.Find(".info .houseInfo a").Each(func(ii int, ss *goquery.Selection) {
 				elem := strings.TrimSpace(ss.Text())
-				if strings.Contains(elem, "成交") {
+				if strings.Contains(elem, "成交") && !strings.Contains(elem, "暂无成交") {
 					regx := regexp.MustCompile(`30天成交(\d{1,})套`)
 					params := regx.FindStringSubmatch(elem)
 					if len(params) >= 2 {
@@ -121,16 +132,14 @@ func SyncXiaoQuOverview() {
 					Name:             quName,
 					OnsaleNumCurrent: onsaleNum,
 					AvgPrice:         avgPrice,
-					SoldNumInNinety:  0,
-					VisitNumInThirty: soldNumInThirty,
+					SoldNumInNinety:  soldNumInThirty,
+					VisitNumInThirty: 0,
 				}
 				models.ConnKe().Create(house)
 			}
 		})
 		pageNo++
-		if pageNo >= 200 {
-			// 防止程序错误，引发系统空转
-			break
-		}
+		fmt.Printf("current date: %s, pageNo: %d\n", curYYYYMMDD, pageNo)
+		time.Sleep(time.Millisecond * 300) // 暂停0.3s
 	}
 }

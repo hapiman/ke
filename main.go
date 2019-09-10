@@ -58,12 +58,12 @@ func main() {
 	defer keConn.Close()
 
 	// 定时任务
-	// controllers.AutoSync()
+	controllers.AutoSync()
 
-	// r.GET("/ke/api/v1/daily/stats", FetchDailyStats)
-	// r.GET("/ke/api/v1/daily/new", FetchDailyNew)
-	// r.GET("/ke/api/v1/daily/txlist", FetchDailyTxList)
+	r.GET("/ke/api/v1/daily/stats", FetchDailyStats)
+	r.GET("/ke/api/v1/daily/new", FetchDailyNew)
+	r.GET("/ke/api/v1/daily/txlist", FetchDailyTxList)
 
-	go controllers.SyncXiaoQuOverview()
+	go controllers.SyncXiaoQuTask()
 	r.Run(fmt.Sprintf(":%d", utils.Port))
 }
