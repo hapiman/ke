@@ -30,3 +30,19 @@ type TabXiaoQuOverview struct {
 func (TabXiaoQuOverview) TableName() string {
 	return "TAB_XIAOQU_OVERVIEW"
 }
+
+type TabOverview struct {
+	ID                int    `gorm:"primary_key; column:id"`
+	CityCode          string `gorm:"column:city_code"`
+	Date              string `gorm:"column:date"`
+	NewHouseNum       int    `gorm:"column:new_house_num"`
+	NewPeopleNum      int    `gorm:"column:new_people_num"`
+	VisitNum          int    `gorm:"column:visit_num"`
+	SoldNumInNinety   int    `gorm:"column:sold_num_in_ninety"`
+	OnsaleNumCurrent  int    `gorm:"column:onsale_num_current"`
+	AvgPriceLastMonth int    `gorm:"column:avg_price_last_month"`
+}
+
+func (TabOverview) TableName() string {
+	return "TAB_OVERVIEW"
+}
