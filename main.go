@@ -64,5 +64,6 @@ func main() {
 	r.GET("/ke/api/v1/daily/new", FetchDailyNew)
 	r.GET("/ke/api/v1/daily/txlist", FetchDailyTxList)
 	go controllers.SyncHouseTask()
+	// go controllers.SyncTransRecords()
 	r.Run(fmt.Sprintf(":%d", utils.Port))
 }

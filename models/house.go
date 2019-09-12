@@ -46,3 +46,19 @@ type TabOverview struct {
 func (TabOverview) TableName() string {
 	return "TAB_OVERVIEW"
 }
+
+type TabTransRecords struct {
+	ID         int    `gorm:"primary_key; column:id"`
+	QuCode     string `gorm:"column:qu_code"`
+	Date       string `gorm:"column:date"`
+	HouseName  string `gorm:"column:house_name"`
+	HouseCode  string `gorm:"column:house_code"`
+	TotalPrice int    `gorm:"column:total_price"`
+	Link       string `gorm:"column:link"`
+	AvgPrice   int    `gorm:"column:avg_price"`
+	TxId       string `gorm:"column:tx_id"`
+}
+
+func (TabTransRecords) TableName() string {
+	return "TAB_TRANS_RECORDS"
+}

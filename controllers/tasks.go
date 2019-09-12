@@ -74,6 +74,7 @@ func SyncHouseTask() {
 		fmt.Println("sync task start again")
 		syncXiaoQuOverview()
 		syncOverview()
+		SyncTransRecords()
 		fmt.Println("sync task end")
 	})
 	c.Start()
@@ -93,6 +94,55 @@ func findEx(quCode, hName string) map[string]interface{} {
 		bks["visitNumInThirty"] = utils.ConvertStr2Num(visitNumInThirty64)
 	}
 	return bks
+}
+
+/*
+同步交易记录
+*/
+func SyncTransRecords() {
+	pageNo := 0
+	for pageNo < 40 {
+		tUrl := fmt.Sprintf("https://bj.ke.com/chengjiao/pg%d/", pageNo)
+		fmt.Println("syncTransRecords pageNo: ", pageNo, ", url: ", tUrl)
+		res, err := http.Get(tUrl)
+		if err != nil {
+			log.Fatal(err)
+		}
+		defer res.Body.Close()
+		if res.StatusCode != 200 {
+			log.Fatalf("status code error: %d %s", res.StatusCode, res.Status)
+		}
+		doc, err := goquery.NewDocumentFromReader(res.Body)
+		if err != nil {
+			fmt.Println("err message: ", err.Error())
+		}
+
+		doc.Find(".leftContent ul.listContent li").Each(func(i int, s *goquery.Selection) {
+			recoBody := &models.TabTransRecords{}
+			recoBody.Link, _ = s.Find(".info .title a").Attr("href")
+			regx := regexp.MustCompile(`https://bj.ke.com/chengjiao/(\d{1,}).html`)
+			params := regx.FindStringSubmatch(recoBody.Link)
+			if len(params) >= 2 {
+				recoBody.HouseCode = params[1]
+			}
+			recoBody.TxId, _ = s.Find(".info .title a").Attr("data-maidian")
+			h := strings.TrimSpace(s.Find(".info .title a").Text())
+			recoBody.HouseName = strings.Split(h, " ")[0]
+			recoBody.Date = strings.TrimSpace(s.Find(".info .address .dealDate").Text())
+			recoBody.TotalPrice = utils.ConvertStr2Num(strings.TrimSpace(s.Find(".info .address .totalPrice .number").Text()))
+			recoBody.AvgPrice = utils.ConvertStr2Num(strings.TrimSpace(s.Find(".info .flood .unitPrice .number").Text()))
+			count := 0
+			models.ConnKe().Where("date=? AND house_code=?", recoBody.Date, recoBody.HouseCode).Find(&models.TabTransRecords{}).Count(&count)
+			if count > 0 {
+				return
+			}
+			err := models.ConnKe().Create(recoBody).Error
+			if err != nil {
+				fmt.Println("syncTransRecords err: ", err.Error())
+			}
+		})
+		pageNo++
+	}
 }
 
 /*
