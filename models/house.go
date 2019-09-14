@@ -56,6 +56,7 @@ type TabTransRecords struct {
 	TotalPrice int    `gorm:"column:total_price"`
 	Link       string `gorm:"column:link"`
 	AvgPrice   int    `gorm:"column:avg_price"`
+	IsParkLot  int    `gorm:"column:is_park_lot"`
 	TxId       string `gorm:"column:tx_id"`
 }
 

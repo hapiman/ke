@@ -67,31 +67,51 @@ func AutoSync() {
 	}()
 }
 
+func someTask() {
+	syncOverview()
+	SyncTransRecords()
+	syncXiaoQuOverview()
+}
+
 func SyncHouseTask() {
+	someTask()
 	c := cron.New()
 	spec := "10 10 10,16,18 * * *"
 	c.AddFunc(spec, func() {
 		fmt.Println("sync task start again")
-		syncXiaoQuOverview()
-		syncOverview()
-		SyncTransRecords()
+		someTask()
 		fmt.Println("sync task end")
 	})
 	c.Start()
 }
 
 func findEx(quCode, hName string) map[string]interface{} {
-	dUrl := fmt.Sprintf("https://bj.ke.com/api/listtop?type=resblock&resblock_id=%s&community_id=0&district_id=&bizcircle_id=&subway_station_id=&word=%s&source=ershou_xiaoqu", quCode, hName)
-	fmt.Println("dUrl =>", dUrl)
 
-	content := utils.HTTPDo("GET", dUrl, []byte{}, map[string]string{})
-	errno := gjson.Get(content, "errno").Num
+	ch := make(chan string)
 	bks := map[string]interface{}{}
-	if errno == 0 {
-		soldNumInNinety64 := strconv.FormatInt(gjson.Get(content, "data.info.90saleCount").Int(), 10)
-		bks["soldNumInNinety"] = utils.ConvertStr2Num(soldNumInNinety64)
-		visitNumInThirty64 := strconv.FormatInt(gjson.Get(content, "data.info.day30See").Int(), 10)
-		bks["visitNumInThirty"] = utils.ConvertStr2Num(visitNumInThirty64)
+
+	dUrl := fmt.Sprintf("https://bj.ke.com/api/listtop?type=resblock&resblock_id=%s&community_id=0&district_id=&bizcircle_id=&subway_station_id=&word=%s&source=ershou_xiaoqu", quCode, hName)
+	go func() {
+		content := utils.HTTPDo("GET", dUrl, []byte{}, map[string]string{})
+		errno := gjson.Get(content, "errno").Num
+		if errno == 0 {
+			soldNumInNinety64 := strconv.FormatInt(gjson.Get(content, "data.info.90saleCount").Int(), 10)
+			bks["soldNumInNinety"] = utils.ConvertStr2Num(soldNumInNinety64)
+			visitNumInThirty64 := strconv.FormatInt(gjson.Get(content, "data.info.day30See").Int(), 10)
+			bks["visitNumInThirty"] = utils.ConvertStr2Num(visitNumInThirty64)
+		}
+		ch <- "ok"
+	}()
+
+	select {
+	case <-ch:
+		{
+			fmt.Printf("it's ok for %s\n", quCode)
+		}
+	case <-time.After(5 * time.Second):
+		{
+			fmt.Printf("dUrl => %s timeout. \n", dUrl)
+		}
 	}
 	return bks
 }
@@ -101,7 +121,7 @@ func findEx(quCode, hName string) map[string]interface{} {
 */
 func SyncTransRecords() {
 	pageNo := 0
-	for pageNo < 40 {
+	for pageNo < 100 {
 		tUrl := fmt.Sprintf("https://bj.ke.com/chengjiao/pg%d/", pageNo)
 		fmt.Println("syncTransRecords pageNo: ", pageNo, ", url: ", tUrl)
 		res, err := http.Get(tUrl)
@@ -125,9 +145,14 @@ func SyncTransRecords() {
 			if len(params) >= 2 {
 				recoBody.HouseCode = params[1]
 			}
+
 			recoBody.TxId, _ = s.Find(".info .title a").Attr("data-maidian")
 			h := strings.TrimSpace(s.Find(".info .title a").Text())
-			recoBody.HouseName = strings.Split(h, " ")[0]
+			tls := strings.Split(h, " ")
+			recoBody.HouseName = tls[0]
+			if len(tls) >= 2 && strings.Contains(tls[1], "车位") {
+				recoBody.IsParkLot = 1
+			}
 			recoBody.Date = strings.TrimSpace(s.Find(".info .address .dealDate").Text())
 			recoBody.TotalPrice = utils.ConvertStr2Num(strings.TrimSpace(s.Find(".info .address .totalPrice .number").Text()))
 			recoBody.AvgPrice = utils.ConvertStr2Num(strings.TrimSpace(s.Find(".info .flood .unitPrice .number").Text()))
@@ -189,12 +214,14 @@ func syncXiaoQuOverview() {
 			avgPrice := utils.ConvertStr2Num(strings.TrimSpace(s.Find(".xiaoquListItemRight .xiaoquListItemPrice .totalPrice span").Text()))
 			onsaleNum := utils.ConvertStr2Num(strings.TrimSpace(s.Find(".xiaoquListItemRight .xiaoquListItemSellCount .totalSellCount span").Text()))
 			count := 0
-			fmt.Print("2222xxxx \n")
+			fmt.Printf("parse file: %s \n", quId)
 			models.ConnKe().Where("date=? AND qu_code=?", curYYYYMMDD, quId).Find(&models.TabXiaoQuOverview{}).Count(&count)
 			if count < 1 {
-				fmt.Printf("3333xxxx %s %s\n", quId, quName)
+				fmt.Printf("will create new %s %s\n", quId, quName)
 				exinfo := findEx(quId, quName)
-				fmt.Print("44444xxxx \n")
+				if exinfo["soldNumInNinety"] == nil {
+					return
+				}
 				house := &models.TabXiaoQuOverview{
 					CityCode:         "bj",
 					DistrictCode:     "chaoyang",
@@ -211,7 +238,6 @@ func syncXiaoQuOverview() {
 				models.ConnKe().Create(house)
 			}
 		})
-		fmt.Println("4444 =>")
 		pageNo++
 		fmt.Printf("current date: %s, pageNo: %d\n", curYYYYMMDD, pageNo)
 		// time.Sleep(time.Millisecond * 300) // 暂停0.3s
